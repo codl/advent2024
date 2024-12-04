@@ -1,8 +1,57 @@
 use std::io::{BufRead, BufReader};
 use std::fs::File;
+use std::str::FromStr;
+
+enum ReportDirection {
+    Up,
+    Down,
+}
+
+type Report = Vec<i64>;
+
+fn parse_line(line: String) -> Report {
+    line.split_whitespace().map(|s| i64::from_str(s).expect("failed parsing int")).collect()
+}
+
+fn is_safe(report: Report) -> bool {
+    let a = report.clone().into_iter();
+    let b = report.into_iter().skip(1);
+    let pairs = a.zip(b);
+    let mut direction : Option<ReportDirection> = None;
+    for (l, r) in pairs {
+        match direction {
+            None => {
+                direction = match l.cmp(&r) {
+                    std::cmp::Ordering::Less => Some(ReportDirection::Up),
+                    _ => Some(ReportDirection::Down),
+                }
+        
+            },
+            Some(ReportDirection::Up) => {
+                if l > r {
+                    return false;
+                }
+            },
+            Some(ReportDirection::Down) => {
+                if l < r {
+                    return false;
+                }
+            },
+        }
+
+        let diff = (l-r).abs();
+        if diff > 3 || diff < 1 {
+            return false
+        }
+        
+    }
+
+    true
+}
 
 fn part1<R: BufRead>(reader: R) -> i64 {
-    0
+    reader.lines().map(|l| l.expect("couldn't read")).map(parse_line)
+        .map(is_safe).filter(|b| *b).count().try_into().expect("number big!!")
 }
 
 fn part2<R: BufRead>(reader: R) -> i64 {
@@ -23,12 +72,12 @@ const TEST_INPUT: &str = "\
 
 #[test]
 fn part1_test() {
-    assert_eq!(part1(BufReader::new(TEST_INPUT.as_bytes())), 1);
+    assert_eq!(part1(BufReader::new(TEST_INPUT.as_bytes())), 2);
 }
 
 #[test]
 fn part2_test() {
-    assert_eq!(part2(BufReader::new(TEST_INPUT.as_bytes())), 1);
+    assert_eq!(part2(BufReader::new(TEST_INPUT.as_bytes())), 0);
 }
 
 fn main() {
