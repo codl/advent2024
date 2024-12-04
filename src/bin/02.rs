@@ -49,13 +49,33 @@ fn is_safe(report: Report) -> bool {
     true
 }
 
+fn generate_dampened(report: Report) -> impl Iterator<Item = Report> {
+    let mut dampened: Vec<Report> = Default::default();
+    for i in 0..(report.len()) {
+        let mut other = report.clone();
+        other.remove(i);
+        dampened.push(other);
+
+    }
+
+    dampened.into_iter()
+}
+
+fn is_safe_dampened(report: Report) -> bool {
+    match is_safe(report.clone()) {
+        true => true,
+        false => generate_dampened(report).any(is_safe),
+    }
+}
+
 fn part1<R: BufRead>(reader: R) -> i64 {
     reader.lines().map(|l| l.expect("couldn't read")).map(parse_line)
         .map(is_safe).filter(|b| *b).count().try_into().expect("number big!!")
 }
 
 fn part2<R: BufRead>(reader: R) -> i64 {
-    0
+    reader.lines().map(|l| l.expect("couldn't read")).map(parse_line)
+        .map(is_safe_dampened).filter(|b| *b).count().try_into().expect("number big!!")
 }
 
 const INPUT_PATH: &str = "input/02.txt";
@@ -77,7 +97,7 @@ fn part1_test() {
 
 #[test]
 fn part2_test() {
-    assert_eq!(part2(BufReader::new(TEST_INPUT.as_bytes())), 0);
+    assert_eq!(part2(BufReader::new(TEST_INPUT.as_bytes())), 4);
 }
 
 fn main() {
