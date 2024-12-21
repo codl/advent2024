@@ -34,7 +34,7 @@ fn part1<R: BufRead>(reader: R) -> i64 {
 	left.sort_unstable();
 	right.sort_unstable();
 	left.into_iter()
-		.zip(right.into_iter())
+		.zip(right)
 		.map(|(l, r)| (l - r).abs())
 		.reduce(|acc, new| acc + new)
 		.unwrap()

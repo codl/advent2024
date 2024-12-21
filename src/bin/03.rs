@@ -13,7 +13,7 @@ struct MulPos {
 	pos: usize,
 }
 
-fn mulposes(input: &String) -> Vec<MulPos> {
+fn mulposes(input: &str) -> Vec<MulPos> {
 	let rgx: regex::Regex = Regex::new(r"mul\(([0-9]+),([0-9]+)\)").unwrap();
 	rgx.captures_iter(input)
 		.map(|cap| MulPos {
@@ -26,25 +26,25 @@ fn mulposes(input: &String) -> Vec<MulPos> {
 		.collect()
 }
 
-fn muls(input: &String) -> Vec<Mul> {
+fn muls(input: &str) -> Vec<Mul> {
 	mulposes(input).into_iter().map(|mp| mp.mul).collect()
 }
 
-fn enabled_ranges(input: &String) -> Vec<Range<usize>> {
+fn enabled_ranges(input: &str) -> Vec<Range<usize>> {
 	let on_rgx = Regex::new(r"do\(\)").unwrap();
 	let off_rgx = Regex::new(r"don't\(\)").unwrap();
 	let mut on_pos: VecDeque<usize> = VecDeque::new();
 	on_pos.push_back(0);
 	let mut off_pos: VecDeque<usize> = VecDeque::new();
-	for matc in on_rgx.find_iter(input.as_str()) {
+	for matc in on_rgx.find_iter(input) {
 		on_pos.push_back(matc.start());
 	}
-	for matc in off_rgx.find_iter(input.as_str()) {
+	for matc in off_rgx.find_iter(input) {
 		off_pos.push_back(matc.start());
 	}
 	off_pos.push_back(input.len());
 	let mut ranges = Vec::new();
-	while on_pos.len() > 0 && off_pos.len() > 0 {
+	while !on_pos.is_empty() && !off_pos.is_empty() {
 		let on = on_pos.pop_front().unwrap();
 		let mut off = 0;
 

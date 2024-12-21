@@ -34,12 +34,9 @@ impl Wordsearch {
 					line.push(letter);
 				}
 				None => {
-					if line.len() > 0 {
-						match lines.last() {
-							Some(other) => {
-								assert!(other.len() == line.len())
-							}
-							_ => {}
+					if !line.is_empty() {
+						if let Some(other) = lines.last() {
+							assert!(other.len() == line.len())
 						}
 						lines.push(line);
 						line = Vec::new();
@@ -62,10 +59,7 @@ impl Wordsearch {
 	}
 
 	fn get(&self, x: i32, y: i32) -> Option<Letter> {
-		if x < 0
-			|| y < 0 || x >= self.width().try_into().unwrap_or_default()
-			|| y >= self.height().try_into().unwrap_or_default()
-		{
+		if x < 0 || y < 0 || x >= self.width() || y >= self.height() {
 			return None;
 		}
 		let x: usize = x.try_into().unwrap();
@@ -90,21 +84,18 @@ fn part1<R: BufRead>(reader: R) -> i32 {
 	let mut count = 0;
 	for x in 0..wordsearch.width() {
 		for y in 0..wordsearch.height() {
-			if match wordsearch.get(x, y) {
-				Some(Letter::X) => true,
-				_ => false,
-			} {
+			if matches!(wordsearch.get(x, y), Some(Letter::X)) {
 				for direction in directions {
-					if match wordsearch.get(x + direction.0, y + direction.1) {
-						Some(Letter::M) => true,
-						_ => false,
-					} && match wordsearch.get(x + 2 * direction.0, y + 2 * direction.1) {
-						Some(Letter::A) => true,
-						_ => false,
-					} && match wordsearch.get(x + 3 * direction.0, y + 3 * direction.1) {
-						Some(Letter::S) => true,
-						_ => false,
-					} {
+					if matches!(
+						wordsearch.get(x + direction.0, y + direction.1),
+						Some(Letter::M)
+					) && matches!(
+						wordsearch.get(x + 2 * direction.0, y + 2 * direction.1),
+						Some(Letter::A)
+					) && matches!(
+						wordsearch.get(x + 3 * direction.0, y + 3 * direction.1),
+						Some(Letter::S)
+					) {
 						count += 1;
 					}
 				}
@@ -115,7 +106,7 @@ fn part1<R: BufRead>(reader: R) -> i32 {
 }
 
 fn part2<R: BufRead>(_reader: R) -> i32 {
-	9
+	todo!()
 }
 
 const INPUT_PATH: &str = "input/04.txt";
@@ -141,7 +132,7 @@ fn part1_test() {
 
 #[test]
 fn part2_test() {
-	assert_eq!(part2(BufReader::new(TEST_INPUT.as_bytes())), 0);
+	assert_eq!(part2(BufReader::new(TEST_INPUT.as_bytes())), 9);
 }
 
 fn main() {

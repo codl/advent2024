@@ -41,7 +41,7 @@ fn is_safe(report: Report) -> bool {
 		}
 
 		let diff = (l - r).abs();
-		if diff > 3 || diff < 1 {
+		if !(1..=3).contains(&diff) {
 			return false;
 		}
 	}
