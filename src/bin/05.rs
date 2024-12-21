@@ -1,8 +1,9 @@
+use std::collections::HashSet;
+use std::collections::VecDeque;
 use std::fs::File;
 use std::io::read_to_string;
 use std::io::{BufRead, BufReader};
 use std::str::FromStr;
-use std::collections::HashSet;
 
 fn split_rules_and_updates(s: &str) -> (&str, &str) {
 	let i = s.find("\n\n").unwrap();
@@ -21,13 +22,16 @@ impl Rules {
 	fn from_str(input: &str) -> Rules {
 		let mut ordering = HashSet::new();
 		for line in input.lines() {
-			let pages: Vec<u32> = line.split('|').map(|i| u32::from_str(i).expect("number")).collect();
+			let pages: Vec<u32> = line
+				.split('|')
+				.map(|i| u32::from_str(i).expect("number"))
+				.collect();
 			assert_eq!(pages.len(), 2);
 			let left = pages.first().unwrap().clone();
 			let right = pages.last().unwrap().clone();
 			ordering.insert((left, right));
 		}
-		Rules{ordering}
+		Rules { ordering }
 	}
 }
 
@@ -38,18 +42,21 @@ struct Update {
 
 impl Update {
 	fn from_str(input: &str) -> Option<Update> {
-		let pages: Vec<u32> = input.split(',').map(|page| u32::from_str(page).expect("number")).collect();
+		let pages: Vec<u32> = input
+			.split(',')
+			.map(|page| u32::from_str(page).expect("number"))
+			.collect();
 		match pages.len() % 2 {
-			1 => Some(Update{pages}),
+			1 => Some(Update { pages }),
 			_ => None,
 		}
 	}
 	fn middle(&self) -> &u32 {
-		self.pages.get(self.pages.len() /2).unwrap()
+		self.pages.get(self.pages.len() / 2).unwrap()
 	}
 
 	fn valid(&self, rules: &Rules) -> bool {
-		let mut before : Vec<u32> = Vec::new();
+		let mut before: Vec<u32> = Vec::new();
 		for page in &self.pages {
 			for previous in &before {
 				if rules.ordering.contains(&(*page, *previous)) {
@@ -60,21 +67,44 @@ impl Update {
 		}
 		true
 	}
+
+	fn reorder(self, rules: &Rules) -> Self {
+		// this suuuuucks
+		let mut left: VecDeque<u32> = VecDeque::with_capacity(self.pages.len());
+		let mut right: VecDeque<u32> = self.pages.into();
+		'outer: while !right.is_empty() {
+			let current = right.pop_front().unwrap();
+			for i in 0..left.len() {
+				let other = left.get(i).unwrap().clone();
+				if rules.ordering.contains(&(current, other)) {
+					left.remove(i);
+					right.push_front(other);
+					right.push_front(current);
+					continue 'outer;
+				}
+			}
+			left.push_back(current);
+		}
+		Self { pages: left.into() }
+	}
 }
 
 #[test]
-fn split_test(){
+fn split_test() {
 	assert_eq!(split_rules_and_updates("1|2\n\n1,2,3\n"), ("1|2", "1,2,3"));
 	assert_eq!(
-		split_rules_and_updates("1|2\n3|4\n\n1,2,3\n2,1,3"), ("1|2\n3|4", "1,2,3\n2,1,3")
+		split_rules_and_updates("1|2\n3|4\n\n1,2,3\n2,1,3"),
+		("1|2\n3|4", "1,2,3\n2,1,3")
 	);
 }
 
 fn part1<R: BufRead>(reader: R) -> u32 {
 	let input = read_to_string(reader).unwrap();
-	let	(rules, updates) = split_rules_and_updates(&input);
+	let (rules, updates) = split_rules_and_updates(&input);
 	let rules = Rules::from_str(rules);
-	let updates = updates.lines().map(|line| Update::from_str(line).expect("valid update"));
+	let updates = updates
+		.lines()
+		.map(|line| Update::from_str(line).expect("valid update"));
 	let mut counter = 0;
 	for update in updates {
 		if update.valid(&rules) {
@@ -84,15 +114,17 @@ fn part1<R: BufRead>(reader: R) -> u32 {
 	counter
 }
 
-fn part2<R: BufRead>(reader: R) -> i32 {
+fn part2<R: BufRead>(reader: R) -> u32 {
 	let input = read_to_string(reader).unwrap();
-	let	(rules, updates) = split_rules_and_updates(&input);
+	let (rules, updates) = split_rules_and_updates(&input);
 	let rules = Rules::from_str(rules);
-	let updates = updates.lines().map(|line| Update::from_str(line).expect("valid update"));
+	let updates = updates
+		.lines()
+		.map(|line| Update::from_str(line).expect("valid update"));
 	let mut counter = 0;
 	for update in updates {
 		if !update.valid(&rules) {
-			//counter += update.reorder(&rules).middle();
+			counter += dbg!(update).reorder(&rules).middle();
 		}
 	}
 	counter
