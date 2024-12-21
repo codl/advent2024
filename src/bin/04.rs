@@ -2,7 +2,7 @@ use std::char;
 use std::fs::File;
 use std::io::{read_to_string, BufRead, BufReader};
 
-#[derive(Copy, Clone, Debug)]
+#[derive(Copy, Clone, Debug, Eq, PartialEq)]
 enum Letter {
 	X,
 	M,
@@ -105,8 +105,36 @@ fn part1<R: BufRead>(reader: R) -> i32 {
 	count
 }
 
-fn part2<R: BufRead>(_reader: R) -> i32 {
-	todo!()
+fn part2<R: BufRead>(reader: R) -> i32 {
+	let input = read_to_string(reader).unwrap();
+	let wordsearch = Wordsearch::from_str(&input);
+	let directions: [(i32, i32); 4] = [(1, 1), (-1, 1), (-1, -1), (1, -1)];
+	let mut count = 0;
+	for x in 0..wordsearch.width() {
+		for y in 0..wordsearch.height() {
+			if matches!(wordsearch.get(x, y), Some(Letter::A)) {
+				let arms: Vec<Option<Letter>> = directions
+					.iter()
+					.map(|(xx, yy)| wordsearch.get(x + xx, y + yy))
+					.collect();
+				if arms.iter().any(|arm| arm.is_none()) {
+					continue;
+				}
+				let arms: Vec<Letter> = arms.iter().map(|o| o.unwrap()).collect();
+				if arms
+					.iter()
+					.any(|arm| matches!(arm, Letter::X) || matches!(arm, Letter::A))
+				{
+					continue;
+				}
+				if arms.get(0) == arms.get(2) || arms.get(1) == arms.get(3) {
+					continue;
+				}
+				count += 1;
+			}
+		}
+	}
+	count
 }
 
 const INPUT_PATH: &str = "input/04.txt";
